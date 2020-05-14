@@ -1,21 +1,36 @@
 import re
-import bs4
+import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-import os
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+import sqlite3
 
-search_input = input("Enter what you want to search: ")
-if len(search_input)<1:
-    search_input = "cricket"            #default keyword search
+connect = sqlite3.connect("page_puller.sqlite")
+cur = connect.cursor()
+
+cur.execute("""
+CREATE TABLE IF NOT EXISTS Pages(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE, html TEXT, search TEXT UNIQUE)""")
+while True:
+    search_input = input("Enter what you want to search: ")
+    if len(search_input)>1:
+        break
+    else:
+        print("You cannot leave search input empty")
 #checking whether there are any special characters
-search = re.search("([0-9a-zA-Z ]+)",search_input).group(0)
+search = re.search("([0-9a-zA-Z]+)",search_input).group(0)
 if (search != search_input):
     print("You can not have special characters in your search.")
 print("Searching for",search)
+cur.execute("""
+SELECT * FROM Pages
+WHERE search = ?""",(search,))
+row = cur.fetchone()
+if row is not None:
+    print("Data already exists")
+    quit()
 
 serverurl="https://web.archive.org/web/*/"
 url =serverurl+search
@@ -35,7 +50,11 @@ try:
     print ("Page is ready!")
 except TimeoutException:
     print ("Loading took too much time!")
-
-stuff = driver.find_elements_by_css_selector("#react-wayback-search .search-result-container li")
-for item in stuff:
-    print(item.get_attribute("class"))
+element = driver.find_element_by_css_selector("#react-wayback-search")
+html = driver.execute_script("return arguments[0].outerHTML;", element)
+cur.execute("""
+INSERT OR IGNORE INTO Pages(html,search)
+VALUES(?,?)""",(html,search))
+connect.commit()
+cur.close()
+print("\n\n===================Retrived Page Successfully===================")
