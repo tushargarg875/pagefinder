@@ -15,14 +15,19 @@ cur.execute("""
 CREATE TABLE IF NOT EXISTS Pages(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE, html TEXT, search TEXT UNIQUE, clean_status INTEGER)""")
 while True:
     search_input = input("Enter what you want to search: ")
-    if len(search_input)>1:
+    if len(search_input)>0:
         break
     else:
         print("You cannot leave search input empty")
 #checking whether there are any special characters
-search = re.search("([0-9a-zA-Z]+)",search_input).group(0)
+try:
+    search = re.search("([0-9a-zA-Z][0-9a-zA-Z ]*)",search_input).group(0)
+except:
+    print ("Enter valid search keywords!")
+    quit()
 if (search != search_input):
     print("You can not have special characters in your search.")
+search = search.strip()
 print("Searching for",search)
 cur.execute("""
 SELECT * FROM Pages
@@ -33,7 +38,8 @@ if row is not None:
     quit()
 
 serverurl="https://web.archive.org/web/*/"
-url =serverurl+search
+addurl = search.replace(' ','%20')
+url =serverurl+addurl
 print("Retrieving data")
 
 #Opening chrome in headless mode
