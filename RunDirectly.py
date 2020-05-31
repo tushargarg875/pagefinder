@@ -69,11 +69,11 @@ cur.execute("""
 SELECT * FROM Pages
 WHERE search = ?""",(search,))
 row = cur.fetchone()
-find =0
+find =0 
 if row is not None:
     print("Data already exists")
-    find = 1
-if (find !=1):
+    find=1
+if (find!=1):
     serverurl="https://web.archive.org/web/*/"
     addurl = search.replace(' ','%20')
     url =serverurl+addurl
@@ -89,7 +89,7 @@ if (find !=1):
     driver = webdriver.Chrome(executable_path=CHROME_DRIVER_PATH,chrome_options=chrome_options)
     driver.get(url)
     #Waiting for Js and React to render the webpage
-    delay = 5 # seconds
+    delay = 10 # seconds
     try:
         myElem = WebDriverWait(driver, delay).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#react-wayback-search .search-result-container li')))
         print ("Page is ready!")
