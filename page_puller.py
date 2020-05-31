@@ -12,7 +12,7 @@ connect = sqlite3.connect("page_puller.sqlite")
 cur = connect.cursor()
 
 cur.execute("""
-CREATE TABLE IF NOT EXISTS Pages(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE, html TEXT, search TEXT UNIQUE)""")
+CREATE TABLE IF NOT EXISTS Pages(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE, html TEXT, search TEXT UNIQUE, clean_status INTEGER)""")
 while True:
     search_input = input("Enter what you want to search: ")
     if len(search_input)>1:
@@ -36,6 +36,7 @@ serverurl="https://web.archive.org/web/*/"
 url =serverurl+search
 print("Retrieving data")
 
+#Opening chrome in headless mode
 WINDOW_SIZE = "1920,1080"
 chrome_options = Options()  
 chrome_options.add_argument("--headless")  
@@ -44,6 +45,7 @@ CHROME_DRIVER_PATH = os.getcwd() + "\chromedriver"
 
 driver = webdriver.Chrome(executable_path=CHROME_DRIVER_PATH,chrome_options=chrome_options)
 driver.get(url)
+#Waiting for Js and React to render the webpage
 delay = 3 # seconds
 try:
     myElem = WebDriverWait(driver, delay).until(EC.presence_of_element_located((By.CSS_SELECTOR, '#react-wayback-search .search-result-container li')))
@@ -53,8 +55,8 @@ except TimeoutException:
 element = driver.find_element_by_css_selector("#react-wayback-search")
 html = driver.execute_script("return arguments[0].outerHTML;", element)
 cur.execute("""
-INSERT OR IGNORE INTO Pages(html,search)
-VALUES(?,?)""",(html,search))
+INSERT OR IGNORE INTO Pages(html,search, clean_status)
+VALUES(?,?,?)""",(html,search,0))
 connect.commit()
 cur.close()
 print("\n\n===================Retrived Page Successfully===================")
